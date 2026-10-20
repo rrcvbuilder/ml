@@ -25,7 +25,22 @@ const imageIds = [
 ];
 
 // Direct image URLs
-const imageUrl = id => `https://i.imgur.com/${id}.jpg`;
+function setImageWithFallback(img, id) {
+  const extensions = ["jpg", "png", "jpeg", "webp"];
+  let index = 0;
+
+  img.onerror = function () {
+    index++;
+
+    if (index < extensions.length) {
+      img.src = `https://i.imgur.com/${id}.${extensions[index]}`;
+    } else {
+      img.alt = "ছবিটি পাওয়া যায়নি";
+    }
+  };
+
+  img.src = `https://i.imgur.com/${id}.${extensions[0]}`;
+}
 
 const profile = document.getElementById("profile");
 const galleryImage = document.getElementById("galleryImage");
@@ -46,7 +61,7 @@ function showPhoto(index) {
   currentPhoto = (index + imageIds.length) % imageIds.length;
 
   if (galleryImage) {
-    galleryImage.src = imageUrl(imageIds[currentPhoto]);
+    setImageWithFallback(galleryImage, imageIds[currentPhoto]);
   }
 
   if (galleryCounter) {
@@ -88,7 +103,7 @@ if (galleryDots && galleryThumbs) {
     thumb.setAttribute("aria-label", `Open photo ${index + 1}`);
 
     const img = document.createElement("img");
-    img.src = imageUrl(id);
+    setImageWithFallback(img, id);
     img.alt = `Gallery photo ${index + 1}`;
     img.loading = "lazy";
 
