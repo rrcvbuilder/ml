@@ -24,8 +24,8 @@ const imageIds = [
   "rCtDvxb"
 ];
 
-// Direct image URLs
-function setImageWithFallback(img, id) {
+// Try different image formats
+function setImageWithFallback(img, id, onLoaded) {
   const extensions = ["jpg", "png", "jpeg", "webp"];
   let index = 0;
 
@@ -36,73 +36,97 @@ function setImageWithFallback(img, id) {
       img.src = `https://i.imgur.com/${id}.${extensions[index]}`;
     } else {
       img.alt = "ছবিটি পাওয়া যায়নি";
+      img.classList.remove("fade-out");
+      if (onLoaded) onLoaded(false);
     }
+  };
+
+  img.onload = function () {
+    img.classList.remove("fade-out");
+    if (onLoaded) onLoaded(true);
   };
 
   img.src = `https://i.imgur.com/${id}.${extensions[0]}`;
 }
 
+// Profile photo
 const profile = document.getElementById("profile");
+
+if (profile) {
+  setImageWithFallback(profile, "NKLT7OX");
+}
+
+// Gallery elements
 const galleryImage = document.getElementById("galleryImage");
 const galleryCounter = document.getElementById("galleryCounter");
 const galleryDots = document.getElementById("galleryDots");
 const galleryThumbs = document.getElementById("galleryThumbs");
 const prevPhoto = document.getElementById("prevPhoto");
 const nextPhoto = document.getElementById("nextPhoto");
-
-if (profile) {
-  profile.src = "https://i.imgur.com/NKLT7OX.jpg";
-}
+const galleryFrame = document.querySelector(".gallery-frame");
 
 let currentPhoto = 0;
-let slideTimer;
+let slideTimer = null;
+let isChangingPhoto = false;
 
 function showPhoto(index) {
-  
-if (galleryImage) {
-  galleryImage.classList.add("fade-out");
-}
- 
-if (galleryImage) {
-  galleryImage.classList.add("fade-out");
-}
+  if (!galleryImage || imageIds.length === 0) return;
+
   currentPhoto = (index + imageIds.length) % imageIds.length;
 
-  if (galleryImage) {
-    setImageWithFallback(galleryImage, imageIds[currentPhoto]);
-  }
+  // Fade out the current image
+  galleryImage.classList.add("fade-out");
+  isChangingPhoto = true;
 
-  if (galleryCounter) {
-    galleryCounter.textContent =
-      `${String(currentPhoto + 1).padStart(2, "0")} / ${String(imageIds.length).padStart(2, "0")}`;
-  }
+  // Wait for fade-out before loading the next image
+  setTimeout(() => {
+    const id = imageIds[currentPhoto];
 
-  document.querySelectorAll(".gallery-dot").forEach((dot, i) => {
-    dot.classList.toggle("active", i === currentPhoto);
-  });
+    if (galleryCounter) {
+      galleryCounter.textContent =
+        `${String(currentPhoto + 1).padStart(2, "0")} / ${String(imageIds.length).padStart(2, "0")}`;
+    }
 
-  document.querySelectorAll(".gallery-thumb").forEach((thumb, i) => {
-    thumb.classList.toggle("active", i === currentPhoto);
-  });
+    document.querySelectorAll(".gallery-dot").forEach((dot, i) => {
+      dot.classList.toggle("active", i === currentPhoto);
+    });
+
+    document.querySelectorAll(".gallery-thumb").forEach((thumb, i) => {
+      thumb.classList.toggle("active", i === currentPhoto);
+    });
+
+    setImageWithFallback(galleryImage, id, () => {
+      isChangingPhoto = false;
+    });
+  }, 450);
 }
 
 function restartAutoSlide() {
   clearInterval(slideTimer);
+
   slideTimer = setInterval(() => {
-    showPhoto(currentPhoto + 1);
-  }, 4000);
+    if (!isChangingPhoto) {
+      showPhoto(currentPhoto + 1);
+    }
+  }, 4500);
 }
 
+// Build gallery dots and thumbnails
 if (galleryDots && galleryThumbs) {
+  galleryDots.innerHTML = "";
+  galleryThumbs.innerHTML = "";
+
   imageIds.forEach((id, index) => {
     const dot = document.createElement("button");
     dot.type = "button";
     dot.className = "gallery-dot";
     dot.setAttribute("aria-label", `Show photo ${index + 1}`);
+
     dot.addEventListener("click", () => {
       showPhoto(index);
       restartAutoSlide();
     });
+
     galleryDots.appendChild(dot);
 
     const thumb = document.createElement("button");
@@ -110,12 +134,14 @@ if (galleryDots && galleryThumbs) {
     thumb.className = "gallery-thumb";
     thumb.setAttribute("aria-label", `Open photo ${index + 1}`);
 
-    const img = document.createElement("img");
-    setImageWithFallback(img, id);
-    img.alt = `Gallery photo ${index + 1}`;
-    img.loading = "lazy";
+    const thumbImage = document.createElement("img");
+    thumbImage.alt = `Gallery photo ${index + 1}`;
+    thumbImage.loading = "lazy";
 
-    thumb.appendChild(img);
+    setImageWithFallback(thumbImage, id);
+
+    thumb.appendChild(thumbImage);
+
     thumb.addEventListener("click", () => {
       showPhoto(index);
       restartAutoSlide();
@@ -128,6 +154,7 @@ if (galleryDots && galleryThumbs) {
   restartAutoSlide();
 }
 
+// Previous and next buttons
 if (nextPhoto) {
   nextPhoto.addEventListener("click", () => {
     showPhoto(currentPhoto + 1);
@@ -142,14 +169,15 @@ if (prevPhoto) {
   });
 }
 
-const galleryFrame = document.querySelector(".gallery-frame");
-
+// Pause slideshow while hovering over gallery
 if (galleryFrame) {
   galleryFrame.addEventListener("mouseenter", () => {
     clearInterval(slideTimer);
   });
 
-  galleryFrame.addEventListener("mouseleave", restartAutoSlide);
+  galleryFrame.addEventListener("mouseleave", () => {
+    restartAutoSlide();
+  });
 }
 
 // Contact form
@@ -174,7 +202,7 @@ if (contactForm) {
     if (recipient === "your-email@example.com") {
       if (formNote) {
         formNote.textContent =
-          "Please add your real email address in script.js first.";
+          "Please replace your-email@example.com with your real email in script.js.";
       }
       return;
     }
