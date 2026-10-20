@@ -58,6 +58,14 @@ let currentPhoto = 0;
 let slideTimer;
 
 function showPhoto(index) {
+  
+if (galleryImage) {
+  galleryImage.classList.add("fade-out");
+}
+ 
+if (galleryImage) {
+  galleryImage.classList.add("fade-out");
+}
   currentPhoto = (index + imageIds.length) % imageIds.length;
 
   if (galleryImage) {
