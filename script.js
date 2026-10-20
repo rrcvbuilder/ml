@@ -210,4 +210,4 @@ if (contactForm) {
     window.location.href =
       `mailto:${recipient}?subject=${subject}&body=${body}`;
   });
-}
+             }
