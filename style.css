@@ -44,11 +44,19 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
 .site-shell {
   width: 100%;
   max-width: 1440px;
   margin: auto;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .topbar {
